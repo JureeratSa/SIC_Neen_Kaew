@@ -4,11 +4,11 @@ import { db } from "@/app/firebase";
 import { onValue, ref } from "firebase/database";
 
 const comfortLevels = [
-    { label: "Asymptomatic", color: "#00BF63", level: 0 },
-    { label: "Mildly Symptomatic", color: "#7EDA57", level: 1 },
-    { label: "Multi-Symptomatic", color: "#94AABF", level: 2 },
-    { label: "Significantly Symptomatic", color: "#FF914D", level: 3 },
-    { label: "Intolerable and Requiring Medical Help", color: "#FF5757", level: 4 },
+    { label: "Neutral", color: "#00BF63", level: 0 },
+    { label: "Extreme Pain", color: "#7EDA57", level: 1 },
+    { label: "Moderate Pain", color: "#94AABF", level: 2 },
+    { label: "Mild Pain", color: "#FF914D", level: 3 },
+    { label: "No Pain", color: "#FF5757", level: 4 },
 ];
 
 export default function OverviewComfortLevel() {
@@ -20,9 +20,10 @@ export default function OverviewComfortLevel() {
     useEffect(() => {
         setLoading(true);
         setError(null);
+        // const path = `Predictions/Data/Latest`;
         const path = `Predictions/Data/Overview/${timeRange}`;
         const unsubscribe = onValue(
-            ref(db, path),
+            ref( db, path ),
             (snapshot) => {
                 const rawData = snapshot.val();
                 if (rawData) {
@@ -46,7 +47,7 @@ export default function OverviewComfortLevel() {
             datasets: [
                 {
                     data: comfortLevels.map((level) =>
-                        painData.ComfortLevel === level.level ? 100 : 0
+                        painData.PainLevel === level.level ? 100 : 0
                     ),
                     backgroundColor: comfortLevels.map((level) => level.color),
                     borderWidth: 1,
@@ -54,6 +55,7 @@ export default function OverviewComfortLevel() {
             ],
         }
         : null;
+
 
     return (
         <div className="flex flex-col justify-center items-center p-8 rounded-3xl shadow-xl border w-full max-w-4xl f-full mx-auto bg-white">
