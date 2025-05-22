@@ -1,0 +1,8 @@
+{
+  "scripts": {
+    "api" : "uvicorn main:app --reload"
+  },
+  "dependencies": {
+    "fastapi": "^0.0.8"
+  }
+}
