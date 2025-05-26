@@ -1,9 +1,9 @@
 import "./globals.css";
-import Navbar from "@/components/Navbar";
+import Sidebar from "@/components/Sidebar";
 import Footer from "@/components/Footer";
 
 export const metadata = {
-  title: "WU Comfort Detector",
+  title: "WU Pain Detector",
   description: "This is a sample website built with Next.js.",
   author: "Teerapat Sommaloun",
   keywords: ["Next.js", "JavaScript", "Web Development"],
@@ -32,10 +32,12 @@ export const viewport = {
 const layout = ({ children }) => {
   return (
     <html lang="en">
-      <body className="flex flex-col min-h-screen bg-white">
-        <Navbar />
-        <main className="flex-grow">{children}</main>
-        <Footer />
+      <body className="flex min-h-screen bg-gray-100">
+        <Sidebar />
+        <div className="flex-1 flex flex-col">
+          <main className="flex-grow p-6">{children}</main>
+          <Footer />
+        </div>
       </body>
     </html>
   );
