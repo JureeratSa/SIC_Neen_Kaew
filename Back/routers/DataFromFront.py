@@ -8,10 +8,7 @@ router = APIRouter()
 @router.post("/patient_data", response_model=PatientData)
 async def patient_data(data: PatientData):
     try:
-        save_patient_data(data.device, data.hn, data.room, data.dname, data.fname, data.lname, data.age, data.sex,
-                          data.height, data.weight, data.bmi)
-
-        return PatientData(
+        save_patient_data(
             device=data.device,
             hn=data.hn,
             room=data.room,
@@ -24,6 +21,7 @@ async def patient_data(data: PatientData):
             weight=data.weight,
             bmi=data.bmi
         )
-
+        return data
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to save Patient Data: {str(e)}")
+
