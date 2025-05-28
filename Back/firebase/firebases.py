@@ -132,8 +132,17 @@ def save_patient_data(device, hn, room, dname, fname, lname, age, sex, height, w
     data = firebase.get()
 
     if data:
-        last_id = max(int(item) for item in data.keys())
-        new_id = f"{last_id + 1:03d}"
+        ids = []
+        for item in data.keys():
+            try:
+                ids.append(int(item))
+            except ValueError:
+                pass
+        if ids:
+            last_id = max(ids)
+            new_id = f"{last_id + 1:03d}"
+        else:
+            new_id = "001"
     else:
         new_id = "001"
 
@@ -154,6 +163,7 @@ def save_patient_data(device, hn, room, dname, fname, lname, age, sex, height, w
 
     firebase.child(new_id).set(patient_data)
 
+# --------------------------------- SAVE ---------------------------------#
 
 def save_predict_AVG1M_to_firebase(Predicted_data, EDA_data, PPG_data, ST_data, BMI_data, timestamp_data):
     firebase = db.reference('/Predictions/Data')
