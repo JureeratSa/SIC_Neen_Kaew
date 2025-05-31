@@ -2,6 +2,7 @@
 'use client';
 import Link from "next/link";
 import { useState } from "react";
+import { PieChartFilled } from '@ant-design/icons';
 
 const Sidebar = () => {
   const [activeItem, setActiveItem] = useState('dashboard');
@@ -9,11 +10,12 @@ const Sidebar = () => {
   const menuItems = [
     {
       id: 'dashboard',
-      icon: (
-        <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-          <path d="M3 13h1v7c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2v-7h1c.6 0 1-.4 1-1s-.4-1-1-1H3c-.6 0-1 .4-1 1s.4 1 1 1zM12 3L2 12h2.5L12 5.5 19.5 12H22L12 3z"/>
-        </svg>
-      ),
+      icon: <PieChartFilled />,
+      // icon: (
+      //   <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+      //     <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+      //   </svg>
+      // ),
       href: '/'
     // },
     // {
@@ -58,7 +60,7 @@ const Sidebar = () => {
     <div className="w-20 bg-teal-700 min-h-screen flex flex-col items-center py-6">
       {/* Logo */}
       <div className="mb-8">
-        <img src="/WUCD.png" alt="Logo" className="w-10 h-10 rounded-full bg-white p-1" />
+        <img src="/WUPD.png" alt="Logo" className="w-10 h-10 rounded-full bg-white p-1" />
       </div>
 
       {/* Menu Items */}
@@ -85,6 +87,7 @@ const Sidebar = () => {
           <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
             <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
           </svg>
+          {/* <UpOutlined /> */}
         </div>
       </div>
     </div>

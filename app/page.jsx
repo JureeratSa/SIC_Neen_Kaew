@@ -5,7 +5,7 @@ import { db } from "@/app/firebase";
 import AddPatient from "@/components/AddPatient";
 import DelPatient from "@/components/DelPatient";
 import Skeleton from "@/components/Skeleton";
-import { FaUserMd, FaBed, FaSort, FaArrowRight } from "react-icons/fa";
+import { FaUserMd, FaBed, FaSort, FaArrowRight, FaExclamationTriangle } from "react-icons/fa";
 
 const PredictionPage = () => {
   const [patientsData, setPatientsData] = useState([]);
@@ -13,15 +13,12 @@ const PredictionPage = () => {
   const [loading, setLoading] = useState(true);
   const [sortBy, setSortBy] = useState("default");
 
-  const predictionsPath = "Prediction/Data/Latest";
+  const predictionsPath = "Predictions/Data/Latest";
   const patientsPath = "Patients/Data";
 
   const comfortLevelMapping = {
-    0: { label: "Neutral", color: "#A0A0A0" }, // สีเทา สื่อถึงกลางๆ
-    1: { label: "Very Uncomfortable", color: "#FF0000" }, // สีแดง สื่อถึงความไม่สบายมาก
-    2: { label: "Uncomfortable", color: "#FFA500" }, // สีส้ม สื่อถึงความไม่สบาย
-    3: { label: "Comfortable", color: "#7EDA57" }, // สีเขียวอ่อน สื่อถึงความสบาย
-    4: { label: "Very Comfortable", color: "#00BF63" }, // สีเขียวเข้ม สื่อถึงความสบายมาก
+    0: { label: "Neutral", color: "bg-base-300 text-base-content", badgeColor: "badge-ghost" },
+    1: { label: "Pain", color: "bg-success text-success-content", badgeColor: "badge-error" },
   };
 
   useEffect(() => {
@@ -53,102 +50,182 @@ const PredictionPage = () => {
   });
 
   return (
-    <div className="flex flex-col items-center min-h-screen bg-gray-100 p-6">
-      <div className="container ">
+    <div className="min-h-screen bg-base-200 p-6">
+      <div className="container mx-auto max-w-7xl">
         {/* Header */}
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-3xl font-bold text-gray-800">🏥 Patient Monitoring</h2>
+        <div className="flex justify-between items-center mb-8">
+          <div>
+            <h1 className="text-4xl font-bold text-base-content flex items-center gap-3">
+              🏥 Patient Monitoring Dashboard
+            </h1>
+            <p className="text-base-content/70 mt-2">Real-time patient comfort level monitoring</p>
+          </div>
           <AddPatient />
         </div>
 
-        {/* Sorting Options */}
-        <div className="mb-4 flex gap-3 items-center justify-end">
-          <FaSort className="text-gray-600 text-lg" />
-          <label className="font-semibold">Sort by Condition:</label>
-          <select
-            value={sortBy}
-            onChange={(e) => setSortBy(e.target.value)}
-            className="border border-gray-300 rounded-md px-3 py-2 shadow-sm"
-          >
-            <option value="default">Default</option>
-            <option value="asc">Mild → Severe</option>
-            <option value="desc">Severe → Mild</option>
-          </select>
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+          <div className="stat bg-base-100 rounded-lg shadow">
+            <div className="stat-figure text-primary">
+              <FaUserMd className="w-8 h-8" />
+            </div>
+            <div className="stat-title">Total Patients</div>
+            <div className="stat-value text-primary">{patientsData.length}</div>
+          </div>
+          
+          <div className="stat bg-base-100 rounded-lg shadow">
+            <div className="stat-figure text-error">
+              <FaExclamationTriangle className="w-8 h-8" />
+            </div>
+            <div className="stat-title">Critical Cases</div>
+            <div className="stat-value text-error">
+              {sortedPatients.filter(p => (predictionsData[p.id]?.ComfortLevel || 0) === 1).length}
+            </div>
+          </div>
+
+          <div className="stat bg-base-100 rounded-lg shadow">
+            <div className="stat-figure text-success">
+              <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+              </svg>
+            </div>
+            <div className="stat-title">Stable Cases</div>
+            <div className="stat-value text-success">
+              {sortedPatients.filter(p => (predictionsData[p.id]?.ComfortLevel || 0) >= 3).length}
+            </div>
+          </div>
+
+          <div className="stat bg-base-100 rounded-lg shadow">
+            <div className="stat-figure text-info">
+              <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+              </svg>
+            </div>
+            <div className="stat-title">Active Monitoring</div>
+            <div className="stat-value text-info">{patientsData.length}</div>
+          </div>
+        </div>
+
+        {/* Controls */}
+        <div className="card bg-base-100 shadow mb-6">
+          <div className="card-body p-4">
+            <div className="flex justify-between items-center">
+              <div className="flex items-center gap-3">
+                <FaSort className="text-base-content/60" />
+                <span className="font-semibold">Sort by Pain Level:</span>
+              </div>
+              <select 
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+                className="select select-bordered select-sm max-w-xs"
+              >
+                <option value="default">Default Order</option>
+                <option value="asc">Mild → Severe</option>
+                <option value="desc">Severe → Mild</option>
+              </select>
+            </div>
+          </div>
         </div>
 
         {/* Patient List */}
-        <div className="bg-white shadow-xl rounded-lg p-6 border">
-          {loading ? (
-            <Skeleton count={5} />
-          ) : sortedPatients.length > 0 ? (
-            <div className="grid gap-4">
-              {sortedPatients.map((patient) => {
-                // Get comfort level for this specific patient
-                const patientPrediction = predictionsData[patient.id] || {};
-                const comfortLevel = patientPrediction.ComfortLevel || 0;
-                const painLevel = comfortLevelMapping[comfortLevel] || { label: "No Data", color: "#A0A0A0" };
+        <div className="card bg-base-100 shadow-xl">
+          <div className="card-body">
+            {loading ? (
+              <div className="space-y-4">
+                {[...Array(5)].map((_, i) => (
+                  <div key={i} className="skeleton h-20 w-full"></div>
+                ))}
+              </div>
+            ) : sortedPatients.length > 0 ? (
+              <div className="space-y-4">
+                {sortedPatients.map((patient) => {
+                  // console.log(patient.id);
+                  // const patientPrediction = predictionsData[patient.id] || {};
+                  const patientPrediction = predictionsData|| {};
+                  const comfortLevel = patientPrediction.PainLevel || null;
+                  const painLevel = comfortLevelMapping[comfortLevel] || { 
+                    label: "No Data", 
+                    color: "bg-base-300 text-base-content",
+                    badgeColor: "badge-ghost"
+                  };
 
-                // Get first name field, trying both possible field names
-                const firstName = patient.First_name || patient.fname || '';
-                const lastName = patient.Last_name || patient.lname || '';
-                const roomNumber = patient.Room || patient.room || 'Not assigned';
-                const doctorName = patient.Doctor_name || (patient.dname ? `Dr. ${patient.dname}` : 'Not assigned');
-                
-                // Safely get first letter of name or use placeholder
-                const firstInitial = firstName ? firstName.charAt(0) : "?";
+                  const firstName = patient.First_name || patient.fname || '';
+                  const lastName = patient.Last_name || patient.lname || '';
+                  const roomNumber = patient.Room || patient.room || 'Not assigned';
+                  const doctorName = patient.Doctor_name || (patient.dname ? `Dr. ${patient.dname}` : 'Not assigned');
+                  const firstInitial = firstName ? firstName.charAt(0) : "?";
 
-                return (
-                  <div
-                    key={patient.id}
-                    className="flex flex-wrap md:flex-nowrap items-center bg-white p-5 rounded-lg shadow-md hover:shadow-lg transition cursor-pointer border border-gray-200"
-                  >
-                    <div className="flex items-center gap-4 flex-1">
-                      {/* Patient Avatar */}
-                      <div className="size-16 bg-blue-500 rounded-full flex items-center justify-center text-xl font-bold text-white shadow-md">
-                        {firstInitial}
-                      </div>
-
-                      {/* Patient Details */}
-                      <div>
-                        <p className="text-lg font-semibold text-gray-800">
-                          {`${firstName || 'Unknown'} ${lastName}`}
-                        </p>
-                        <p className="text-sm text-gray-500 flex items-center gap-1">
-                          <FaBed className="text-blue-400" /> Room: {roomNumber}
-                        </p>
-                        <p className="text-sm text-gray-500 flex items-center gap-1">
-                          <FaUserMd className="text-red-400" /> Doctor: {doctorName}
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* Comfort Level Display */}
-                    <div className="flex flex-col items-center">
-                      <div
-                        className="px-5 py-2 rounded-md text-white font-semibold text-center shadow-md"
-                        style={{ backgroundColor: painLevel.color }}
-                      >
-                        {painLevel.label}
-                      </div>
-                    </div>
-
-                    {/* View Button */}
-                    <a
-                      href={`/patient/${patient.id}`}
-                      className="ml-4 mr-4 px-4 py-2 bg-blue-500 text-white rounded-md flex items-center gap-2 shadow-md hover:bg-blue-600 transition"
+                  return (
+                    <div
+                      key={patient.id}
+                      className={`card bg-base-100 border transition-all duration-200 hover:shadow-lg ${
+                        comfortLevel === 1 ? 'border-error shadow-error/20' : 
+                        comfortLevel === 2 ? 'border-warning shadow-warning/20' : 'border-base-300'
+                      }`}
                     >
-                      View <FaArrowRight />
-                    </a>
+                      <div className="card-body p-6">
+                        <div className="flex flex-wrap lg:flex-nowrap items-center gap-6">
+                          {/* Patient Avatar */}
+                          <div className="avatar">
+                            <div className="w-16 h-16 rounded-full bg-primary text-primary-content flex items-center justify-center text-xl font-bold shadow-lg">
+                              {/* {firstInitial} */}
+                            </div>
+                          </div>
 
-                    {/* Delete Button */}
-                    <DelPatient id={patient.id} className="ml-4" />
-                  </div>
-                );
-              })}
-            </div>
-          ) : (
-            <p className="text-center text-red-500 font-semibold">No patient data available</p>
-          )}
+                          {/* Patient Details */}
+                          <div className="flex-1 min-w-0">
+                            <h3 className="text-xl font-bold text-base-content truncate">
+                              {`${firstName || 'Unknown'} ${lastName}`}
+                            </h3>
+                            <div className="flex flex-wrap gap-4 mt-2 text-sm text-base-content/70">
+                              <div className="flex items-center gap-1">
+                                <FaBed className="text-info" />
+                                <span>Room: {roomNumber}</span>
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <FaUserMd className="text-secondary" />
+                                <span>Dr: {doctorName}</span>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Pain Level Badge */}
+                          <div className="text-center">
+                            <div className={`badge ${painLevel.badgeColor} badge-lg p-4 font-semibold`}>
+                              {painLevel.label}
+                            </div>
+                            {/* {comfortLevel === 1 && (
+                              <div className="text-xs text-error mt-1 font-medium animate-pulse">
+                                Needs Attention
+                              </div>
+                            )} */}
+                          </div>
+
+                          {/* Actions */}
+                          <div className="flex items-center gap-3">
+                            <a
+                              href={`/patient/${patient.id}`}
+                              className="btn btn-primary btn-sm gap-2"
+                            >
+                              View Details
+                              <FaArrowRight />
+                            </a>
+                            <DelPatient id={patient.id} />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="text-center py-12">
+                <div className="text-6xl mb-4">📋</div>
+                <h3 className="text-2xl font-bold text-base-content mb-2">No Patients Found</h3>
+                <p className="text-base-content/60">No patient data is currently available in the system.</p>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>
