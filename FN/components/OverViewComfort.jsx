@@ -4,11 +4,11 @@ import { db } from "@/app/firebase";
 import { onValue, ref } from "firebase/database";
 
 const comfortLevels = [
-    { label: "Asymptomatic", color: "#00BF63", level: 0 },
-    { label: "Mildly Symptomatic", color: "#7EDA57", level: 1 },
-    { label: "Multi-Symptomatic", color: "#94AABF", level: 2 },
-    { label: "Significantly Symptomatic", color: "#FF914D", level: 3 },
-    { label: "Intolerable and Requiring Medical Help", color: "#FF5757", level: 4 },
+    { label: "No pain", color: "#7EDA57", level: 0 },
+    { label: "Mild Pain", color: "#f6b932", level: 1 },
+    { label: "Moderate Pain", color: "#EA580C", level: 2 },
+    { label: "Severe Pain", color: "#f60b41", level: 3 },
+    // { label: "Intolerable and Requiring Medical Help", color: "#FF5757", level: 4 },
 ];
 
 export default function OverviewComfortLevel() {
@@ -20,7 +20,8 @@ export default function OverviewComfortLevel() {
     useEffect(() => {
         setLoading(true);
         setError(null);
-        const path = `Predictions/Data/Overview/${timeRange}`;
+        // Updated path to include pain_level_distribution
+        const path = `Predictions/Overview/${timeRange}/pain_level_distribution`;
         const unsubscribe = onValue(
             ref(db, path),
             (snapshot) => {
@@ -40,25 +41,109 @@ export default function OverviewComfortLevel() {
         return () => unsubscribe();
     }, [timeRange]);
 
-    const pieChartData = painData
+    const processPainData = (data) => {
+        if (!data) return null;
+
+        if (typeof data === 'object' && !Array.isArray(data)) {
+            // Handle new structure with underscores: level_0, level_1, etc.
+            if (data.level_0 !== undefined || data.level_1 !== undefined ||
+                data.level_2 !== undefined || data.level_3 !== undefined) {
+                return comfortLevels.map(level => {
+                    const value = data[`level_${level.level}`];
+                    // Convert string to number if needed
+                    return typeof value === 'string' ? parseInt(value) || 0 : (value || 0);
+                });
+            }
+
+            // Handle old structure with no underscores: level0, level1, etc.
+            if (data.level0 !== undefined || data.level1 !== undefined) {
+                return comfortLevels.map(level => {
+                    const value = data[`level${level.level}`];
+                    return typeof value === 'string' ? parseInt(value) || 0 : (value || 0);
+                });
+            }
+
+            // Handle numeric keys: "0", "1", "2", "3"
+            if (data["0"] !== undefined || data["1"] !== undefined) {
+                return comfortLevels.map(level => {
+                    const value = data[level.level.toString()];
+                    return typeof value === 'string' ? parseInt(value) || 0 : (value || 0);
+                });
+            }
+
+            // Handle array within object
+            if (data.painLevels && Array.isArray(data.painLevels)) {
+                return comfortLevels.map(level =>
+                    data.painLevels.filter(pain => pain === level.level).length
+                );
+            }
+
+            // Handle single pain level
+            if (data.PainLevel !== undefined) {
+                return comfortLevels.map(level =>
+                    data.PainLevel === level.level ? 1 : 0
+                );
+            }
+        }
+
+        // Handle direct array
+        if (Array.isArray(data)) {
+            return comfortLevels.map(level =>
+                data.filter(pain => pain === level.level).length
+            );
+        }
+
+        return null;
+    };
+
+    const chartData = processPainData(painData);
+    const hasData = chartData && chartData.some(value => value > 0);
+
+    const pieChartData = hasData
         ? {
             labels: comfortLevels.map((level) => level.label),
             datasets: [
                 {
-                    data: comfortLevels.map((level) =>
-                        painData.ComfortLevel === level.level ? 100 : 0
-                    ),
+                    data: chartData,
                     backgroundColor: comfortLevels.map((level) => level.color),
                     borderWidth: 1,
+                    borderColor: '#ffffff',
                 },
             ],
         }
         : null;
 
+    const pieChartOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                display: true,
+                position: "right",
+                labels: {
+                    padding: 20,
+                    usePointStyle: true,
+                    font: {
+                        size: 12
+                    }
+                }
+            },
+            tooltip: {
+                callbacks: {
+                    label: function(context) {
+                        const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                        const percentage = total > 0 ? ((context.parsed * 100) / total).toFixed(1) : 0;
+                        return `${context.label}: ${context.parsed} times (${percentage}%)`;
+                    }
+                }
+            }
+        }
+    };
+
     return (
-        <div className="flex flex-col justify-center items-center p-8 rounded-3xl shadow-xl border w-full max-w-4xl f-full mx-auto bg-white">
-            <h2 className=" text-black text-2xl font-bold mb-6 text-center uppercase tracking-wide ">
-                Overview of Comfort Level
+        <div className="flex flex-col justify-center items-center p-8 rounded-3xl shadow-xl border w-full max-w-4xl h-full mx-auto bg-white">
+            <h2 className="text-black text-2xl font-bold mb-6 text-center uppercase tracking-wide">
+                Overview of Pain Level
             </h2>
 
             <div className="flex flex-col items-center w-full max-w-lg mb-6">
@@ -68,10 +153,11 @@ export default function OverviewComfortLevel() {
                         <button
                             key={option}
                             onClick={() => setTimeRange(option)}
-                            className={`px-3 py-1.5 rounded-full text-sm font-medium shadow-md transition-all ${timeRange === option
-                                ? "bg-green-600 text-white hover:bg-green-500"
-                                : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-                                }`}
+                            className={`px-3 py-1.5 rounded-full text-sm font-medium shadow-md transition-all ${
+                                timeRange === option
+                                    ? "bg-green-600 text-white hover:bg-green-500"
+                                    : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                            }`}
                         >
                             {option}
                         </button>
@@ -86,20 +172,14 @@ export default function OverviewComfortLevel() {
                     </div>
                 ) : error ? (
                     <div className="text-center text-red-500 font-medium text-lg">{error}</div>
+                ) : !hasData ? (
+                    <div className="flex justify-center items-center h-full">
+                        <div className="text-center text-gray-500 font-medium text-lg">
+                            No pain data recorded for the selected time range
+                        </div>
+                    </div>
                 ) : (
-                    <Pie
-                        data={pieChartData}
-                        options={{
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            plugins: {
-                                legend: {
-                                    display: true,
-                                    position: "right",
-                                },
-                            },
-                        }}
-                    />
+                    <Pie data={pieChartData} options={pieChartOptions} />
                 )}
             </div>
         </div>

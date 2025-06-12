@@ -12,6 +12,7 @@ export default function PredictionDetails() {
   const [previousPainLevel, setPreviousPainLevel] = useState(null);
   const [audioRef, setAudioRef] = useState(null);
   const [alertInterval, setAlertInterval] = useState(null);
+  const [deviceData, setDeviceData] = useState(null);
 
   // สร้าง Audio object เมื่อ component mount
   useEffect(() => {
@@ -176,17 +177,29 @@ export default function PredictionDetails() {
 
   const comfortLevelMapping = {
     0: {
-      text: "Neutral",
+      text: "No pain",
       daisyClass: "bg-base-300 text-base-content",
       badgeClass: "badge-ghost",
-      color: "#A0A0A0"
+      color: "#7EDA57"
     },
     1: {
-      text: "Pain",
+      text: "Mild Pain",
+      daisyClass: "bg-warning text-warning-content",
+      badgeClass: "badge-warning",
+      color: "#f6b932"
+    },
+    2: {
+      text: "Moderate Pain",
+      daisyClass: "bg-warning text-warning-content",
+      badgeClass: "badge-warning",
+      color: "#EA580C"
+    },
+    3: {
+      text: "Severe Pain",
       daisyClass: "bg-error text-error-content",
       badgeClass: "badge-error",
-      color: "#FF0000"
-    },
+      color: "#f60b41"
+    }
   };
 
   // ฟังก์ชันตรวจสอบการเปลี่ยนจาก Neutral เป็น Pain
@@ -247,8 +260,8 @@ export default function PredictionDetails() {
               <div className="bg-red-50 p-4 rounded-lg mb-4 text-left">
                 <p className="text-sm text-gray-600 mb-2">Current readings:</p>
                 <div className="text-sm space-y-1">
-                  <p><strong>EDA:</strong> {latestData.EDA} µS</p>
-                  <p><strong>HR:</strong> {latestData.PPG} bpm</p>
+                  <p><strong>EDA:</strong> {deviceData?.EDA || latestData.EDA || "--"} µS</p>
+                  <p><strong>HR:</strong> {latestData.PPG > 200? "--" : latestData.PPG} bpm</p>
                   <p><strong>Skin Temp:</strong> {latestData.ST} °C</p>
                   <p><strong>Time:</strong> {new Date(latestData.timestamp).toLocaleTimeString()}</p>
                 </div>
@@ -283,12 +296,12 @@ export default function PredictionDetails() {
     );
   };
 
+  // แยก useEffect สำหรับดึงข้อมูล Predictions
   useEffect(() => {
     setLoading(true);
-
     const predictionsPath = "Predictions/Data/Latest";
     const firebaseQuery = query(ref(db, predictionsPath));
-
+    
     const unsubscribe = onValue(
       firebaseQuery,
       (snapshot) => {
@@ -299,16 +312,16 @@ export default function PredictionDetails() {
           console.log("Current data:", data);
           console.log("Previous pain level:", previousPainLevel);
           console.log("Current pain level:", currentLevel);
-
+          
           // ตรวจสอบการเปลี่ยนจาก Neutral เป็น Pain
           if (previousPainLevel !== null && checkPainTransition(currentLevel, previousPainLevel)) {
             console.log("🚨 Pain detected! Showing modal...");
             setShowPainModal(true);
             startAlertSound();
           }
-
+          
           const levelInfo = comfortLevelMapping[currentLevel] || {
-            text: "Unknown",
+            text: "- -",
             daisyClass: "bg-base-300 text-base-content",
             badgeClass: "badge-ghost",
             color: "#A0A0A0"
@@ -330,9 +343,33 @@ export default function PredictionDetails() {
         setLoading(false);
       }
     );
-
+    
     return () => unsubscribe();
   }, [previousPainLevel]);
+
+  // แยก useEffect สำหรับดึงข้อมูล Device
+  useEffect(() => {
+    const devicePath = "Device/Inpatient/MD-V5-0000804/1s";
+    const deviceQuery = query(ref(db, devicePath));
+    
+    const unsubscribeDevice = onValue(
+      deviceQuery,
+      (snapshot) => {
+        const data = snapshot.val();
+        if (data) {
+          console.log("Device data:", data);
+          setDeviceData(data);
+        } else {
+          console.error("No device data available");
+        }
+      },
+      (error) => {
+        console.error("Error fetching device data:", error);
+      }
+    );
+    
+    return () => unsubscribeDevice();
+  }, []);
 
   if (loading) {
     return (
@@ -392,10 +429,10 @@ export default function PredictionDetails() {
             <div className="text-red-500 text-2xl mb-2">❤️</div>
             <div className="text-gray-600 text-sm mb-1">Heart Rate</div>
             <div className="text-2xl font-bold text-red-500">
-              {latestData.PPG}
-              <span className="text-sm">bpm</span>
+              {deviceData?.HeartRate ? parseFloat(deviceData.HeartRate).toFixed(0) : "--"}
+              <span className="text-sm"> bpm</span>
             </div>
-            <div className="text-xs text-green-600 mt-1">Normal Range</div>
+            <div className={deviceData?.HeartRate > 200 || deviceData?.HeartRate < 60? "text-xs text-red-600 mt-1" : "text-xs text-green-600 mt-1"} >{deviceData?.HeartRate > 200 || deviceData?.HeartRate < 60? "Abnormal Range" : "Normal Range"}</div>
           </div>
         </div>
 
@@ -404,7 +441,7 @@ export default function PredictionDetails() {
             <div className="text-orange-500 text-2xl mb-2">🌡️</div>
             <div className="text-gray-600 text-sm mb-1">Skin Temperature</div>
             <div className="text-2xl font-bold text-orange-500">
-              {latestData.ST}
+              {deviceData?.ST ? parseFloat(deviceData.ST).toFixed(2) : "--"}
               <span className="text-sm">°C</span>
             </div>
             <div className="text-xs text-orange-600 mt-1">Elevated</div>
@@ -416,15 +453,15 @@ export default function PredictionDetails() {
             <div className="text-blue-500 text-2xl mb-2">⚡</div>
             <div className="text-gray-600 text-sm mb-1">EDA</div>
             <div className="text-2xl font-bold text-blue-500">
-              {latestData.EDA}
+              {deviceData?.EDA ? parseFloat(deviceData.EDA).toFixed(2) : "--"}
               <span className="text-sm">μS</span>
             </div>
             <div className="text-xs text-blue-600 mt-1">Normal</div>
           </div>
         </div>
       </div>
-{/* 
-      Test Button (for development)
+
+      {/* Test Button (for development)
       <div className="mt-6 text-center">
         <button
           onClick={() => {

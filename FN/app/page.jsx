@@ -17,8 +17,10 @@ const PredictionPage = () => {
   const patientsPath = "Patients/Data";
 
   const comfortLevelMapping = {
-    0: { label: "Neutral", color: "bg-base-300 text-base-content", badgeColor: "badge-ghost" },
-    1: { label: "Pain", color: "bg-success text-success-content", badgeColor: "badge-error" },
+0: { label: "No pain", color: "bg-base-300 text-base-content", badgeColor: "badge-ghost" },
+1: { label: "Mild Pain", color: "bg-warning text-warning-content", badgeColor: "badge-warning" },
+2: { label: "Moderate Pain", color: "bg-warning text-warning-content", badgeColor: "badge-warning" },
+3: { label: "Severe Pain", color: "bg-error text-error-content", badgeColor: "badge-error" }
   };
 
   useEffect(() => {
@@ -79,7 +81,8 @@ const PredictionPage = () => {
             </div>
             <div className="stat-title">Critical Cases</div>
             <div className="stat-value text-error">
-              {sortedPatients.filter(p => (predictionsData[p.id]?.ComfortLevel || 0) === 1).length}
+              {console.log("predictionsData : ",predictionsData)}
+              {sortedPatients.filter(p => (predictionsData[p.id]?.ComfortLevel || 0) === 2).length}
             </div>
           </div>
 
@@ -142,18 +145,22 @@ const PredictionPage = () => {
                   // console.log(patient.id);
                   // const patientPrediction = predictionsData[patient.id] || {};
                   const patientPrediction = predictionsData|| {};
+                  console.log("patientPrediction : ",patientPrediction)
                   const comfortLevel = patientPrediction.PainLevel || null;
                   const painLevel = comfortLevelMapping[comfortLevel] || { 
                     label: "No Data", 
                     color: "bg-base-300 text-base-content",
                     badgeColor: "badge-ghost"
                   };
+                  console.log("painLevel : ",painLevel)
 
                   const firstName = patient.First_name || patient.fname || '';
                   const lastName = patient.Last_name || patient.lname || '';
                   const roomNumber = patient.Room || patient.room || 'Not assigned';
                   const doctorName = patient.Doctor_name || (patient.dname ? `Dr. ${patient.dname}` : 'Not assigned');
                   const firstInitial = firstName ? firstName.charAt(0) : "?";
+                  console.log("firstInitial : ",firstInitial)
+            
 
                   return (
                     <div
@@ -166,10 +173,9 @@ const PredictionPage = () => {
                       <div className="card-body p-6">
                         <div className="flex flex-wrap lg:flex-nowrap items-center gap-6">
                           {/* Patient Avatar */}
-                          <div className="avatar">
-                            <div className="w-16 h-16 rounded-full bg-primary text-primary-content flex items-center justify-center text-xl font-bold shadow-lg">
-                              {/* {firstInitial} */}
-                            </div>
+                          <div className="w-20 h-20 rounded-full bg-teal-500 text-white flex items-center justify-center text-2xl font-bold mx-auto mb-4">
+                            {patient?.First_name?.charAt(0) || "--"}
+                            {patient?.Last_name?.charAt(0) || "--"}
                           </div>
 
                           {/* Patient Details */}

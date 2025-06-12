@@ -63,16 +63,16 @@ const PatientCard = ({
                     </>
                   ) : (
                     <div className="w-full h-full rounded-full bg-primary text-primary-content flex items-center justify-center text-2xl font-bold">
-                      {patient.First_name?.charAt(0) || 'RC'}
+                      {patient.First_name?.charAt(0) || '--'}
                     </div>
                   )}
                 </div>
               </div>
               
               <h2 className="text-xl font-bold text-base-content mb-1">
-                {patient.First_name || 'Roger'} {patient.Last_name || 'Curtis'}
+                {patient.First_name || '--'} {patient.Last_name || '--'}
               </h2>
-              <p className="text-base-content/60 text-sm mb-4">Age: {patient.Age || '35'}</p>
+              <p className="text-base-content/60 text-sm mb-4">Age: {patient.Age || '--'}</p>
               
               <button className="btn btn-primary btn-sm rounded-full px-6">
                 Update
